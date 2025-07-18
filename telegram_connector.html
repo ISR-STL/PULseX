@@ -1,0 +1,50 @@
+<!-- 
+Conector do Cael Security Bot para integração com o Painel ZentrAPXPlay.
+Responsável por sincronizar mensagens automáticas do Telegram com o sistema de segurança 2FA.
+-->
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Cael Security Bot Connector</title>
+</head>
+<body>
+  <h1>Cael Security Bot Conector</h1>
+  <p>Conexão do Telegram com o Painel GitHub Pages para envio automático de mensagens e alertas.</p>
+
+  <script>
+    // === CONFIGURAÇÃO DO BOT TELEGRAM ===
+    const TELEGRAM_BOT_TOKEN = "8086418131:AAFvVTQdO0FZnuyleI3qrTJYAAaUP4_cNlA";
+    const CHAT_ID = "SEU_CHAT_ID_AQUI"; // vou preencher depois automaticamente
+
+    // Função de teste para enviar mensagem
+    async function sendTelegramMessage(message) {
+      const url = https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage;
+      const payload = {
+        chat_id: CHAT_ID,
+        text: message
+      };
+
+      try {
+        const response = await fetch(url, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(payload)
+        });
+        const data = await response.json();
+        console.log("Mensagem enviada:", data);
+      } catch (error) {
+        console.error("Erro ao enviar mensagem:", error);
+      }
+    }
+
+    // Disparar mensagem inicial assim que carregar
+    window.onload = () => {
+      sendTelegramMessage("✅ Conector do Cael Security Bot está ativo e pronto para mensagens automáticas.");
+    };
+  </script>
+</body>
+</html>
