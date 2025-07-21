@@ -1,0 +1,51 @@
+<!-- 
+Relay Webhook para GitHub -> Telegram
+Este arquivo recebe eventos JSON do GitHub, formata e envia para o Telegram Bot.
+-->
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Relay GitHub → Telegram</title>
+</head>
+<body>
+  <h2>✅ Relay Webhook do GitHub para Telegram</h2>
+  <p>Este arquivo está ativo para receber eventos e enviar para o bot do Telegram.</p>
+
+  <script>
+    // === CONFIGURAÇÕES DO TELEGRAM ===
+    const TELEGRAM_BOT_TOKEN = "8086418131:AAFvVTQdO0FZnuyleI3qrTJYAAaUP4_cNlA";
+    const CHAT_ID = "7699118334"; // seu ID
+
+    // Função para enviar mensagem ao Telegram
+    async function enviarMensagemTelegram(mensagem) {
+      const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
+      const payload = {
+        chat_id: CHAT_ID,
+        text: mensagem,
+        parse_mode: "Markdown"
+      };
+
+      try {
+        const response = await fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+
+        const data = await response.json();
+        console.log("Resposta do Telegram:", data);
+      } catch (error) {
+        console.error("Erro ao enviar para o Telegram:", error);
+      }
+    }
+
+    // TESTE AUTOMÁTICO QUANDO CARREGA
+    window.onload = async () => {
+      const mensagemTeste = `🔗 Relay ativo!\n\nAgora este arquivo está pronto para receber eventos do GitHub e enviar para o Telegram 🚀`;
+      await enviarMensagemTelegram(mensagemTeste);
+    }
+  </script>
+</body>
+</html>
