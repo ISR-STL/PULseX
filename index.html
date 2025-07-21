@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>PULseX - Teste Bot Telegram</title>
+</head>
+<body>
+  <h1>✅ PULseX - Conector do Cael Security Bot</h1>
+  <p>Esta página está conectada ao seu bot do Telegram.</p>
+  
+  <button onclick="enviarTeste()">📩 Enviar mensagem de teste</button>
+
+  <script>
+    // === CONFIGURAÇÃO DO BOT ===
+    const TELEGRAM_BOT_TOKEN = "8086418131:AAFvVTQdO0FZnuyleI3qrTJYAAaUP4_cNlA";
+    const CHAT_ID = "7699118334"; // já coloquei seu ID
+
+    async function enviarTelegram(mensagem) {
+      const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
+      const payload = { chat_id: CHAT_ID, text: mensagem };
+
+      try {
+        const response = await fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) throw new Error("Erro ao enviar mensagem!");
+        console.log("✅ Mensagem enviada com sucesso!");
+        alert("✅ Mensagem enviada para o Telegram!");
+      } catch (err) {
+        console.error(err);
+        alert("❌ Erro ao enviar mensagem.");
+      }
+    }
+
+    function enviarTeste() {
+      enviarTelegram("🚀 Teste do GitHub Pages via index.html!");
+    }
+  </script>
+</body>
+</html>
