@@ -1,29 +1,30 @@
 <!-- 
-Conector do Cael Security Bot para integração com o Painel ZentrAPXPlay.
-Responsável por sincronizar mensagens automáticas do Telegram com o sistema de segurança 2FA.
+Conector do Cael Security Bot para integração avançada com o Painel ZentrAPXPlay.
+Corrigido para funcionar no GitHub Pages sem erro CORS.
 -->
 
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <title>Cael Security Bot Connector</title>
+  <title>Cael Security Bot - Painel Avançado</title>
 </head>
 <body>
-  <h1>Cael Security Bot Conector</h1>
-  <p>Conexão do Telegram com o Painel GitHub Pages para envio automático de mensagens e alertas.</p>
+  <h1>✅ Painel Avançado do Cael Security Bot</h1>
+  <p>Esta página está conectada ao bot do Telegram (modo avançado).</p>
+
+  <button onclick="enviarMensagem()">🚀 Enviar mensagem de teste</button>
 
   <script>
     // === CONFIGURAÇÃO DO BOT TELEGRAM ===
     const TELEGRAM_BOT_TOKEN = "8086418131:AAFvVTQdO0FZnuyleI3qrTJYAAaUP4_cNlA";
-    const CHAT_ID = "SEU_CHAT_ID_AQUI"; // vou preencher depois automaticamente
+    const CHAT_ID = "7699118334"; // já corrigido com seu ID
 
-    // Função de teste para enviar mensagem
-    async function sendTelegramMessage(message) {
+    async function enviarMensagem() {
       const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
       const payload = {
         chat_id: CHAT_ID,
-        text: message
+        text: "✅ Mensagem de teste enviada pelo Painel Avançado!"
       };
 
       try {
@@ -35,21 +36,17 @@ Responsável por sincronizar mensagens automáticas do Telegram com o sistema de
           body: JSON.stringify(payload)
         });
 
-        if (!response.ok) {
-          throw new Error(`Telegram API responded with status ${response.status}`);
-        }
-
         const data = await response.json();
-        console.log("Mensagem enviada:", data);
+
+        if (data.ok) {
+          alert("✅ Mensagem enviada com sucesso!");
+        } else {
+          alert("❌ Erro ao enviar: " + JSON.stringify(data));
+        }
       } catch (error) {
-        console.error("Erro ao enviar mensagem:", error);
+        alert("❌ Erro ao enviar mensagem: " + error.message);
       }
     }
-
-    // Disparar mensagem inicial assim que carregar
-      window.onload = async () => {
-        await sendTelegramMessage("✅ Conector do Cael Security Bot está ativo e pronto para mensagens automáticas.");
-      };
   </script>
 </body>
 </html>
