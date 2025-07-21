@@ -20,7 +20,7 @@ Responsável por sincronizar mensagens automáticas do Telegram com o sistema de
 
     // Função de teste para enviar mensagem
     async function sendTelegramMessage(message) {
-      const url = https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage;
+      const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
       const payload = {
         chat_id: CHAT_ID,
         text: message
@@ -34,6 +34,11 @@ Responsável por sincronizar mensagens automáticas do Telegram com o sistema de
           },
           body: JSON.stringify(payload)
         });
+
+        if (!response.ok) {
+          throw new Error(`Telegram API responded with status ${response.status}`);
+        }
+
         const data = await response.json();
         console.log("Mensagem enviada:", data);
       } catch (error) {
@@ -42,9 +47,9 @@ Responsável por sincronizar mensagens automáticas do Telegram com o sistema de
     }
 
     // Disparar mensagem inicial assim que carregar
-    window.onload = () => {
-      sendTelegramMessage("✅ Conector do Cael Security Bot está ativo e pronto para mensagens automáticas.");
-    };
+      window.onload = async () => {
+        await sendTelegramMessage("✅ Conector do Cael Security Bot está ativo e pronto para mensagens automáticas.");
+      };
   </script>
 </body>
 </html>
