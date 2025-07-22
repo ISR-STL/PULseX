@@ -19,6 +19,11 @@ async function enviarTelegram(mensagem) {
   });
 }
 
+// ✅ ROTA PRINCIPAL PARA TESTAR SE O BACKEND ESTÁ ONLINE
+app.get('/', (req, res) => {
+  res.send('✅ PULseX Backend está ativo e ouvindo webhooks do GitHub!');
+});
+
 // Webhook que recebe os eventos do GitHub
 app.post('/webhook', async (req, res) => {
   const event = req.headers['x-github-event'];
