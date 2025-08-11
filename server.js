@@ -5,9 +5,14 @@ const axios = require('axios');
 const app = express();
 app.use(bodyParser.json());
 
+// Servir os arquivos estáticos do diretório atual (frontend)
+app.use(express.static(__dirname));
+
 // === CONFIGURAÇÕES DO TELEGRAM ===
-const TELEGRAM_TOKEN = 'SEU_TOKEN_AQUI';
-const CHAT_ID = 'SEU_CHAT_ID_AQUI';
+// Os dados sensíveis agora vêm de variáveis de ambiente para não
+// expor o token no código-fonte do frontend
+const TELEGRAM_TOKEN = process.env.TELEGRAM_TOKEN;
+const CHAT_ID = process.env.CHAT_ID;
 
 // Função para enviar mensagem para o Telegram
 async function enviarTelegram(mensagem) {
@@ -25,7 +30,7 @@ async function enviarTelegram(mensagem) {
 
 // Rota básica para GET (teste manual)
 app.get('/', (req, res) => {
-  res.send("✅ PULseX Backend está ativo e ouvindo webhooks do GitHub!");
+  res.sendFile(__dirname + '/index.html');
 });
 
 // Webhook que recebe os eventos do GitHub
@@ -56,6 +61,13 @@ app.post('/webhook', async (req, res) => {
 
   // SEMPRE responde 200 OK para evitar erro 502
   res.status(200).json({ status: "ok", received_event: event });
+});
+
+// Endpoint para o frontend enviar mensagens ao Telegram
+app.post('/send-message', async (req, res) => {
+  const { message } = req.body;
+  await enviarTelegram(message || 'Mensagem vazia');
+  res.json({ status: 'ok' });
 });
 
 // Porta usada pelo Render

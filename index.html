@@ -6,21 +6,18 @@
 </head>
 <body>
   <h1>✅ PULseX - Conector do Cael Security Bot</h1>
-  <p>Esta página está conectada ao seu bot do Telegram.</p>
+  <p>Esta página está conectada ao seu bot do Telegram via backend.</p>
 
-  <button onclick="sendDirectTelegramMessage()">🚀 Enviar mensagem de teste</button>
+  <button onclick="sendTestMessage()">🚀 Enviar mensagem de teste</button>
 
   <script>
-    // Configuração do Bot
-    const TELEGRAM_BOT_TOKEN = "8086418131:AAFvVTQdO0FZnuyleI3qrTJYAAaUP4_cNlA";
-    const CHAT_ID = "7699118334";
-
-    function sendDirectTelegramMessage() {
-      const message = encodeURIComponent("🚀 Teste direto do GitHub Pages");
-      const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage?chat_id=${CHAT_ID}&text=${message}`;
-
-      // Abre a API em nova aba (evita bloqueio CORS)
-      window.open(url, "_blank");
+    // Envia uma mensagem de teste para o backend, que repassa ao Telegram
+    async function sendTestMessage() {
+      await fetch('/send-message', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: '🚀 Teste direto do Frontend' })
+      });
     }
   </script>
 </body>
