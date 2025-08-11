@@ -1,16 +1,26 @@
 const express = require('express');
-const bodyParser = require('body-parser');
 const axios = require('axios');
 
+// tenta carregar variáveis de ambiente de um arquivo .env, se existir
+try {
+  require('dotenv').config();
+} catch (e) {
+  console.warn('dotenv não instalado; certifique-se de definir as variáveis de ambiente manualmente');
+}
+
 const app = express();
-app.use(bodyParser.json());
+app.use(express.json());
+app.use(express.static(__dirname));
 
 // === CONFIGURAÇÕES DO TELEGRAM ===
-const TELEGRAM_TOKEN = 'SEU_TOKEN_AQUI';
-const CHAT_ID = 'SEU_CHAT_ID_AQUI';
+const TELEGRAM_TOKEN = process.env.TELEGRAM_TOKEN;
+const CHAT_ID = process.env.CHAT_ID;
 
 // Função para enviar mensagem para o Telegram
 async function enviarTelegram(mensagem) {
+  if (!TELEGRAM_TOKEN || !CHAT_ID) {
+    throw new Error('Variáveis TELEGRAM_TOKEN ou CHAT_ID não configuradas');
+  }
   const url = `https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage`;
   try {
     await axios.post(url, {
@@ -20,6 +30,7 @@ async function enviarTelegram(mensagem) {
     });
   } catch (error) {
     console.error("Erro ao enviar para o Telegram:", error.message);
+    throw error;
   }
 }
 
@@ -56,6 +67,20 @@ app.post('/webhook', async (req, res) => {
 
   // SEMPRE responde 200 OK para evitar erro 502
   res.status(200).json({ status: "ok", received_event: event });
+});
+
+// Rota simples para receber mensagens do frontend e enviar ao Telegram
+app.post('/send', async (req, res) => {
+  const { message } = req.body;
+  if (!message) {
+    return res.status(400).json({ error: 'message é obrigatório' });
+  }
+  try {
+    await enviarTelegram(message);
+    res.json({ status: 'ok' });
+  } catch (error) {
+    res.status(500).json({ error: 'Falha ao enviar mensagem' });
+  }
 });
 
 // Porta usada pelo Render
