@@ -1,63 +1,73 @@
 const express = require('express');
-const bodyParser = require('body-parser');
+const helmet = require('helmet');
+const crypto = require('crypto');
 const axios = require('axios');
+try { require('dotenv').config(); } catch (_) {}
 
 const app = express();
-app.use(bodyParser.json());
 
-// === CONFIGURAÇÕES DO TELEGRAM ===
-const TELEGRAM_TOKEN = 'SEU_TOKEN_AQUI';
-const CHAT_ID = 'SEU_CHAT_ID_AQUI';
+// Segurança básica
+app.use(helmet());
 
-// Função para enviar mensagem para o Telegram
-async function enviarTelegram(mensagem) {
-  const url = `https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage`;
-  try {
-    await axios.post(url, {
-      chat_id: CHAT_ID,
-      text: mensagem,
-      parse_mode: 'Markdown'
-    });
-  } catch (error) {
-    console.error("Erro ao enviar para o Telegram:", error.message);
+// Parsing
+app.use(express.json({ limit: '256kb' }));
+
+// Request ID para rastreabilidade
+app.use((req, res, next) => {
+  req.id = req.headers['x-request-id'] || crypto.randomUUID();
+  res.set('x-request-id', req.id);
+  next();
+});
+
+// Rate limit simples em memória (pragmático)
+const RATE_WINDOW = parseInt(process.env.RATE_LIMIT_WINDOW_MS || '60000', 10);
+const RATE_MAX = parseInt(process.env.RATE_LIMIT_MAX || '30', 10);
+const bucket = new Map();
+app.use((req, res, next) => {
+  const key = req.ip;
+  const now = Date.now();
+  const arr = (bucket.get(key) || []).filter(t => now - t < RATE_WINDOW);
+  arr.push(now);
+  bucket.set(key, arr);
+  if (arr.length > RATE_MAX) return res.status(429).json({ error: 'Too Many Requests' });
+  next();
+});
+
+const { TELEGRAM_TOKEN, CHAT_ID, DRY_RUN } = process.env;
+const isDry = String(DRY_RUN).toLowerCase() === 'true';
+
+// HTTP client com timeout + retry exponencial
+const http = axios.create({ timeout: 8000 });
+async function postWithRetry(url, data, tries = 3) {
+  let attempt = 0, last;
+  while (attempt < tries) {
+    try { return await http.post(url, data); }
+    catch (e) { last = e; await new Promise(r => setTimeout(r, 2 ** attempt * 200)); attempt++; }
   }
+  throw last;
 }
 
-// Rota básica para GET (teste manual)
-app.get('/', (req, res) => {
-  res.send("✅ PULseX Backend está ativo e ouvindo webhooks do GitHub!");
+async function enviarTelegram(message) {
+  if (isDry) return;
+  if (!TELEGRAM_TOKEN || !CHAT_ID) throw new Error('Missing TELEGRAM_TOKEN/CHAT_ID');
+  const url = `https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage`;
+  await postWithRetry(url, { chat_id: CHAT_ID, text: message });
+}
+
+app.get('/health', (_, res) => res.json({ ok: true }));
+
+// Rota canônica
+app.post(['/send-message','/send','/api/send-message'], async (req, res) => {
+  const msg = typeof req.body?.message === 'string' ? req.body.message.trim() : '';
+  if (!msg) return res.status(400).json({ error: 'message é obrigatório' });
+  try { await enviarTelegram(msg); return res.json({ status: 'ok' }); }
+  catch (e) { return res.status(502).json({ error: 'Falha ao enviar', ref: req.id }); }
 });
 
-// Webhook que recebe os eventos do GitHub
-app.post('/webhook', async (req, res) => {
-  const event = req.headers['x-github-event'] || 'unknown';
-  const payload = req.body;
+const PORT = process.env.PORT || 8080;
+const server = app.listen(PORT, () => console.log(`✅ API on :${PORT} dry=${isDry}`));
 
-  console.log("📩 Evento recebido:", event);
-  console.log("Payload:", JSON.stringify(payload, null, 2));
+// Shutdown gracioso p/ Railway
+['SIGTERM','SIGINT'].forEach(s => process.on(s, () => server.close(() => process.exit(0))));
+module.exports = server;
 
-  let mensagem = `🚨 *Novo evento do GitHub* 🚨\n`;
-  mensagem += `*Evento:* ${event}\n`;
-
-  if (event === 'ping') {
-    mensagem += "✅ *Webhook conectado com sucesso!* 🎉";
-  } else if (event === 'push') {
-    mensagem += `*Repositório:* ${payload.repository.full_name}\n`;
-    const commits = payload.commits.map(c => `- ${c.message} (por ${c.author.name})`).join('\n');
-    mensagem += `*Push detectado!* 🚀\nCommits:\n${commits}`;
-  } else if (event === 'pull_request') {
-    mensagem += `*Pull Request:* ${payload.pull_request.title}\nAutor: ${payload.pull_request.user.login}`;
-  } else {
-    mensagem += `Evento genérico recebido.`;
-  }
-
-  // Enviar mensagem para o Telegram
-  await enviarTelegram(mensagem);
-
-  // SEMPRE responde 200 OK para evitar erro 502
-  res.status(200).json({ status: "ok", received_event: event });
-});
-
-// Porta usada pelo Render
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`✅ Servidor rodando na porta ${PORT}`));
